@@ -1,0 +1,6 @@
+[submodule "imguizmo-sys/ImGuizmo"]
+	path = imguizmo-sys/ImGuizmo
+	url = https://github.com/CedricGuillemet/ImGuizmo
+[submodule "imguizmo-sys/imgui"]
+	path = imguizmo-sys/imgui
+	url = https://github.com/ocornut/imgui

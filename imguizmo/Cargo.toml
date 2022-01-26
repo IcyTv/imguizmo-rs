@@ -1,0 +1,16 @@
+[package]
+edition = "2021"
+name = "imguizmo"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+imgui-docking = {git = "https://github.com/imgui-rs/imgui-rs.git", features = ["docking"], package = "imgui", optional = true}
+imgui-normal = {version = "*", package = "imgui", optional = true}
+imguizmo-sys = {path = "../imguizmo-sys"}
+mint = "*"
+
+[features]
+default = ["imgui-normal"]
+docking = ["imgui-docking"]
