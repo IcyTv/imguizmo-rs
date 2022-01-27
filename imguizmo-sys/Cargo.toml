@@ -10,3 +10,8 @@ cxx = "1.0"
 
 [build-dependencies]
 cxx-build = "1.0"
+# imgui-sys = "*"
+
+[lib]
+bench = false
+# crate-type = ["rlib"]

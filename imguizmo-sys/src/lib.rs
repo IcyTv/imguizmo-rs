@@ -107,6 +107,7 @@ mod ffi {
             local_bounds: *const f32,
             bounds_snap: *const f32,
         ) -> bool;
+
         unsafe fn ViewManipulate(
             view: *mut f32,
             length: f32,
@@ -126,3 +127,12 @@ mod ffi {
 }
 
 pub use ffi::*;
+
+impl From<[f32; 2]> for ImVec2 {
+    fn from(pos: [f32; 2]) -> Self {
+        ImVec2 {
+            x: pos[0],
+            y: pos[1],
+        }
+    }
+}

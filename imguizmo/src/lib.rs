@@ -1,3 +1,6 @@
+use std::borrow::{Borrow, BorrowMut};
+
+use glam::Mat4;
 #[cfg(feature = "imgui-docking")]
 pub use imgui_docking as imgui;
 #[cfg(feature = "imgui-normal")]
@@ -5,8 +8,8 @@ pub use imgui_normal as imgui;
 
 pub use imguizmo_sys as sys;
 
-type ImGuizmoMode = sys::OPERATION; //TODO convert to bitflags
-type ImGuizmoRotationMode = sys::MODE;
+pub type ImGuizmoMode = sys::OPERATION; //TODO convert to bitflags
+pub type ImGuizmoRotationMode = sys::MODE;
 
 pub struct ImGuizmo;
 // pub struct ImGuizmo {
@@ -36,159 +39,144 @@ impl ImGuizmo {
         sys::Enable(enable);
     }
 
-    /// Decompose matrix, can be anyting that implements Into<mint::ColumnMatrix4<f32>>
+    /// Decompose matrix
     ///
     /// As per docs: "These functions have some numerical stability issues for now. Use with caution."
     ///
     /// Also note that it might be faster to do the matrix composition in native rust code. The reason
     /// these functions exist, is because there might be some wierdness in the implementation, so for
     /// consistency sake.
-    pub fn decompose_matrix_to_components<M>(
-        matrix: M,
-    ) -> (mint::Vector3<f32>, mint::Vector3<f32>, mint::Vector3<f32>)
-    where
-        M: Into<mint::ColumnMatrix4<f32>>,
-    {
-        let matrix: mint::ColumnMatrix4<f32> = matrix.into();
-        let matrix: [f32; 16] = matrix.into();
-        let mut translation = [0.0f32; 3];
-        let mut rotation = [0.0f32; 3];
-        let mut scale = [0.0f32; 3];
+    pub fn decompose_matrix_to_components(
+        matrix: &glam::Mat4,
+    ) -> (glam::Vec3, glam::Vec3, glam::Vec3) {
+        let mut translation = glam::Vec3::ZERO;
+        let mut rotation = glam::Vec3::ZERO;
+        let mut scale = glam::Vec3::ZERO;
         unsafe {
             sys::DecomposeMatrixToComponents(
-                matrix.as_ptr(),
-                translation.as_mut_ptr(),
-                rotation.as_mut_ptr(),
-                scale.as_mut_ptr(),
+                matrix as *const _ as *const f32,
+                &mut translation as *mut _ as *mut f32,
+                &mut rotation as *mut _ as *mut f32,
+                &mut scale as *mut _ as *mut f32,
             )
         };
 
-        (translation.into(), rotation.into(), scale.into())
+        (translation, rotation.into(), scale.into())
     }
 
-    /// Compose matrix from components, can be anyting that implements Into<mint::ColumnMatrix4<f32>>
+    /// Compose matrix from components
     ///
     /// As per docs: "These functions have some numerical stability issues for now. Use with caution."
     ///
     /// Also note that it might be faster to do the matrix composition in native rust code. The reason
     /// these functions exist, is because there might be some wierdness in the implementation, so for
     /// consistency sake.
-    pub fn recompose_matrix_from_components<V>(
-        translation: V,
-        rotation: V,
-        scale: V,
-    ) -> mint::ColumnMatrix4<f32>
-    where
-        V: Into<mint::Vector3<f32>>,
-    {
-        let translation: mint::Vector3<f32> = translation.into();
-        let rotation: mint::Vector3<f32> = rotation.into();
-        let scale: mint::Vector3<f32> = scale.into();
-        let translation: [f32; 3] = translation.into();
-        let rotation: [f32; 3] = rotation.into();
-        let scale: [f32; 3] = scale.into();
-
-        let mut matrix = [0.0f32; 16];
-
+    pub fn recompose_matrix_from_components(
+        translation: &glam::Vec3,
+        rotation: &glam::Vec3,
+        scale: &glam::Vec3,
+    ) -> glam::Mat4 {
+        let mut matrix = glam::Mat4::IDENTITY;
         unsafe {
             sys::RecomposeMatrixFromComponents(
-                translation.as_ptr(),
-                rotation.as_ptr(),
-                scale.as_ptr(),
-                matrix.as_mut_ptr(),
+                translation as *const _ as *const f32,
+                rotation as *const _ as *const f32,
+                scale as *const _ as *const f32,
+                &mut matrix as *mut _ as *mut f32,
             )
         };
 
         matrix.into()
     }
 
-    pub fn draw_cube<M>(view: M, projection: M, matrix: &[M])
-    where
-        M: Into<mint::ColumnMatrix4<f32>> + Copy,
-    {
-        let view: mint::ColumnMatrix4<f32> = view.into();
-        let projection: mint::ColumnMatrix4<f32> = projection.into();
-        let view: [f32; 16] = view.into();
-        let projection: [f32; 16] = projection.into();
-
-        let matrices: Vec<f32> = matrix
-            .iter()
-            .map(|m| {
-                let col_mat: [f32; 16] = (*m).into().into();
-                col_mat
-            })
-            .flatten()
-            .collect::<Vec<_>>();
+    pub fn draw_cube(view: &Mat4, projection: &Mat4, matrix: &[Mat4]) {
         unsafe {
             sys::DrawCubes(
-                view.as_ptr(),
-                projection.as_ptr(),
-                matrices.as_ptr(),
-                matrices.len() as i32,
+                view as *const _ as *const f32,
+                projection as *const _ as *const f32,
+                matrix as *const _ as *const f32,
+                matrix.len() as i32,
             )
         };
     }
 
-    pub fn manipulate<M, V>(
-        view: M,
-        projection: M,
+    pub fn manipulate(
+        view: &glam::Mat4,
+        projection: &glam::Mat4,
         operation: ImGuizmoMode,
         mode: ImGuizmoRotationMode,
-        matrix: &mut M,
-        delta_matrix: Option<&mut M>,
-        snap: Option<V>,
-        local_bounds: Option<V>,
-        bounds_snap: Option<V>,
-    ) where
-        M: Into<[f32; 16]> + Copy + From<[f32; 16]>, //TODO use mint::ColumnMatrix4<f32>...?
-        V: Into<[f32; 3]>,
-    {
-        let view: [f32; 16] = view.into();
-        let projection: [f32; 16] = projection.into();
-        let mut matrix_arr: [f32; 16] = (*matrix).into().into();
-        // let mut delta_matrix: [f32; 16] = [0.0f32; 16];
-        let delta_ptr = if let Some(delta_matrix) = delta_matrix.as_deref() {
-            let mut delta_matrix: [f32; 16] = (*delta_matrix).into().into();
-            delta_matrix.as_mut_ptr()
+        matrix: &mut glam::Mat4,
+        delta_matrix: Option<&mut glam::Mat4>,
+        snap: Option<&glam::Vec3>,
+        local_bounds: Option<&glam::Vec2>,
+        bounds_snap: Option<&glam::Vec2>,
+    ) {
+        let delta_ptr = if let Some(delta_matrix) = delta_matrix {
+            delta_matrix
         } else {
             std::ptr::null_mut()
         };
         let snap_ptr = if let Some(snap) = snap {
-            let snap: [f32; 3] = snap.into().into();
-            snap.as_ptr()
+            snap
         } else {
             std::ptr::null()
         };
         let local_bounds_ptr = if let Some(local_bounds) = local_bounds {
-            let local_bounds: [f32; 3] = local_bounds.into().into();
-            local_bounds.as_ptr()
+            local_bounds
         } else {
             std::ptr::null()
         };
         let bounds_snap_ptr = if let Some(bounds_snap) = bounds_snap {
-            let bounds_snap: [f32; 3] = bounds_snap.into().into();
-            bounds_snap.as_ptr()
+            bounds_snap
         } else {
             std::ptr::null()
         };
 
         unsafe {
             sys::Manipulate(
-                view.as_ptr(),
-                projection.as_ptr(),
+                view as *const _ as *const f32,
+                projection as *const _ as *const f32,
                 operation.into(),
                 mode.into(),
-                matrix_arr.as_mut_ptr(),
-                delta_ptr,
-                snap_ptr,
-                local_bounds_ptr,
-                bounds_snap_ptr,
+                matrix as *mut _ as *mut f32,
+                delta_ptr as *mut _ as *mut f32,
+                snap_ptr as *const _ as *const f32,
+                local_bounds_ptr as *const _ as *const f32,
+                bounds_snap_ptr as *const _ as *const f32,
             )
         };
 
-        *matrix = matrix_arr.into();
-        if let Some(delta_matrix) = delta_matrix {
-            *delta_matrix = matrix_arr.into();
+        // *matrix = matrix_arr.into();
+        // if let Some(delta_matrix) = delta_matrix {
+        //     *delta_matrix = matrix_arr.into();
+        // }
+    }
+
+    pub fn view_manipulate(
+        view: &mut glam::Mat4,
+        distance: f32,
+        position: &glam::Vec2,
+        size: &glam::Vec2,
+        background_color: u32,
+    ) {
+        let position = sys::ImVec2 {
+            x: position.x,
+            y: position.y,
+        };
+
+        let size = sys::ImVec2 {
+            x: size.x,
+            y: size.y,
+        };
+
+        unsafe {
+            sys::ViewManipulate(
+                view as *mut _ as *mut f32,
+                distance,
+                position,
+                size,
+                background_color,
+            )
         }
     }
 
@@ -205,8 +193,32 @@ impl ImGuizmo {
     /// This api WILL be broken in the future.
     pub fn set_draw_list(_: Option<()>) {
         unsafe {
-            sys::SetDrawlist(std::ptr::null_mut());
+            let draw_lists = imgui::sys::igGetWindowDrawList();
+            sys::SetDrawlist(draw_lists as *mut _);
         }
         // self.draw_list = Some(*draw_list_ptr);
+    }
+
+    pub fn set_rect(x: f32, y: f32, width: f32, height: f32) {
+        sys::SetRect(x, y, width, height);
+    }
+
+    pub fn set_orthographic(ortho: bool) {
+        sys::SetOrthographic(ortho);
+    }
+
+    pub fn draw_grid(view: &Mat4, proj: &Mat4, identity: &Mat4, size: f32) {
+        unsafe {
+            sys::DrawGrid(
+                view as *const _ as *const f32,
+                proj as *const _ as *const f32,
+                identity as *const _ as *const f32,
+                size,
+            )
+        }
+    }
+
+    pub fn set_id(id: i32) {
+        sys::SetID(id);
     }
 }

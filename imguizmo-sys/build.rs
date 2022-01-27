@@ -1,7 +1,18 @@
-use std::env;
-use std::path::PathBuf;
-
 fn main() {
+    // let target_path = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
+
+    // for file in target_path
+    //     .iter()
+    //     .filter(|f| f.to_string_lossy().contains("imgui-sys"))
+    // {
+    //     let path = std::path::PathBuf::from(file.to_str().unwrap());
+    //     let path = path.join("out/third_party/imgui/imgui.o");
+
+    //     if path.exists() {
+    //         print!("cargo:rustc-link-lib={}", path.display().to_string());
+    //     }
+    // }
+
     // println!("cargo:rustc-link-lib=cimgui");
     // println!("cargo:rustc-link-lib=ImGuizmo");
     // println!("cargo:rerun-if-changed=wrapper.hpp");
@@ -30,4 +41,8 @@ fn main() {
         .compile("ImGuizmo");
 
     println!("cargo:rerun-if-changed=src/lib.rs");
+    println!("cargo:rerun-if-changed=src/wrapper.hpp");
+    println!("cargo:rerun-if-changed=ImGuizmo/ImGuizmo.cpp");
+    println!("cargo:rerun-if-changed=ImGuizmo/ImGuizmo.h");
+    println!("cargo:rerun-if-changed=imgui/imgui.h");
 }
