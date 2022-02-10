@@ -59,7 +59,7 @@ impl ImGuizmo {
             )
         };
 
-        (translation, rotation.into(), scale.into())
+        (translation, rotation, scale)
     }
 
     /// Compose matrix from components
@@ -84,7 +84,7 @@ impl ImGuizmo {
             )
         };
 
-        matrix.into()
+        matrix
     }
 
     pub fn draw_cube(view: &Mat4, projection: &Mat4, matrix: &[Mat4]) {
@@ -98,6 +98,7 @@ impl ImGuizmo {
         };
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn manipulate(
         view: &glam::Mat4,
         projection: &glam::Mat4,
@@ -134,8 +135,8 @@ impl ImGuizmo {
             sys::Manipulate(
                 view as *const _ as *const f32,
                 projection as *const _ as *const f32,
-                operation.into(),
-                mode.into(),
+                operation,
+                mode,
                 matrix as *mut _ as *mut f32,
                 delta_ptr as *mut _ as *mut f32,
                 snap_ptr as *const _ as *const f32,

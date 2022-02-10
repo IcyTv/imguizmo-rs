@@ -1,5 +1,6 @@
 [package]
 edition = "2021"
+license = "MIT"
 name = "imguizmo-sys"
 version = "0.1.0"
 
@@ -11,6 +12,7 @@ cxx = "1.0"
 [build-dependencies]
 cxx-build = "1.0"
 # imgui-sys = "*"
+anyhow = "*"
 
 [lib]
 bench = false

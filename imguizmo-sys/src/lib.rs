@@ -59,20 +59,51 @@ mod ffi {
         type OPERATION;
         type MODE;
 
+        /// # Safety
+        ///
+        /// This function is unsafe because the caller needs to guarantee the integrity
+        /// of the ImDrawList pointer.
         unsafe fn SetDrawlist(draw_list: *mut ImDrawList);
         fn BeginFrame();
+
+        /// # Safety
+        ///
+        /// This function is unsafe because the caller needs to guarantee the integrity
+        /// of the ImGuiContext pointer.
         unsafe fn SetImGuiContext(context: *mut ImGuiContext);
         fn IsOver() -> bool;
         fn IsUsing() -> bool;
 
         fn Enable(enable: bool);
 
+        /// # Safety
+        ///
+        /// This function is unsafe because the caller needs to guarantee the integrity
+        /// of the f32 pointers
+        ///
+        /// # Arguments
+        ///
+        /// matrix - The matrix to be decomposed f32[16]
+        /// translation - The translation component of the matrix f32[3]
+        /// rotation - The rotation component of the matrix f32[4]
+        /// scale - The scale component of the matrix f32[3]
         unsafe fn DecomposeMatrixToComponents(
             matrix: *const f32,
             translation: *mut f32,
             rotation: *mut f32,
             scale: *mut f32,
         );
+        /// # Safety
+        ///
+        /// This function is unsafe because the caller needs to guarantee the integrity
+        /// of the f32 pointers
+        ///
+        /// # Arguments
+        ///
+        /// translation - The translation component of the matrix f32[3]
+        /// rotation - The rotation component of the matrix f32[4]
+        /// scale - The scale component of the matrix f32[3]
+        /// matrix - The matrix to be recomposed f32[16]
         unsafe fn RecomposeMatrixFromComponents(
             translation: *const f32,
             rotation: *const f32,
@@ -83,19 +114,32 @@ mod ffi {
         fn SetRect(x: f32, y: f32, width: f32, height: f32);
         fn SetOrthographic(is_orthographic: bool);
 
+        /// # Safety
+        ///
+        /// This function is unsafe because the caller needs to guarantee the integrity
+        /// of the view, projection and matrices pointers
         unsafe fn DrawCubes(
             view: *const f32,
             projection: *const f32,
             matrices: *const f32,
             count: i32,
         );
+        /// # Safety
+        ///
+        /// This function is unsafe because the caller needs to guarantee the integrity
+        /// of the view, projection and matrix pointers
         unsafe fn DrawGrid(
             view: *const f32,
             projection: *const f32,
-            matric: *const f32,
+            matrix: *const f32,
             grid_size: f32,
         );
 
+        /// # Safety
+        ///
+        /// This function is unsafe because the caller needs to guarantee the integrity
+        /// of the pointers
+        #[allow(clippy::too_many_arguments)]
         unsafe fn Manipulate(
             view: *const f32,
             projection: *const f32,
@@ -108,6 +152,10 @@ mod ffi {
             bounds_snap: *const f32,
         ) -> bool;
 
+        /// # Safety
+        ///
+        /// This function is unsafe because the caller needs to guarantee the integrity
+        /// of the view pointer
         unsafe fn ViewManipulate(
             view: *mut f32,
             length: f32,
