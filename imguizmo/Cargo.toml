@@ -10,7 +10,7 @@ license = "MIT"
 glam = "*"
 imgui-docking = {git = "https://github.com/imgui-rs/imgui-rs.git", features = ["docking"], package = "imgui", optional = true}
 imgui-normal = {version = "*", package = "imgui", optional = true}
-imguizmo-sys = {path = "../imguizmo-sys"}
+imguizmo-sys = {git = "https://github.com/IcyTv/imguizmo-rs"}
 
 [features]
 default = ["imgui-normal"]
